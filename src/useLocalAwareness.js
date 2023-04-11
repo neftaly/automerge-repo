@@ -1,14 +1,33 @@
 import { useRepo } from "automerge-repo-react-hooks";
 import { useEffect } from "react";
 import useStateRef from "react-usestateref";
-import { peerEvents } from "./useRemoteAwareness";
+import { peerEvents, CHANNEL_ID_PREFIX } from "./useRemoteAwareness";
 
+/**
+ * This hook maintains state for the local client.
+ * It takes a userId, a channelId, and optionally an initial state.
+ * Like React.useState, it returns a [state, setState] array.
+ *
+ * When the state is changed, it broadcasts the changes to all clients.
+ * It also broadcasts a heartbeat to let other clients know it is online.
+ *
+ * Note that userIds aren't secure (yet). Any client can lie about theirs.
+ * ChannelID is usually just your documentID with some extra characters.
+ *
+ * @param {string} userId Unique user ID. Clients can lie about this.
+ * @param {string} channelId Which channel to send messages on. This *must* be unique.
+ * @param {any} initialState Initial state object/primitive
+ * @param {object?} options
+ * @param {number?1500} options.heartbeatTime How often to send a heartbeat (in ms)
+ * @returns [state, setState]
+ */
 export const useLocalAwareness = (
   userId,
-  channelId,
+  channelIdUnprefixed,
   initialState,
   { heartbeatTime = 15000 } = {}
 ) => {
+  const channelId = CHANNEL_ID_PREFIX + channelIdUnprefixed;
   const [localState, setLocalState, localStateRef] = useStateRef(initialState);
   const { ephemeralData } = useRepo();
 
@@ -51,6 +70,12 @@ export const useLocalAwareness = (
       broadcastTimeoutId && clearTimeout(broadcastTimeoutId);
     };
   }, [peerEvents]);
+
+  // TODO: Send an "offline" message on unmount
+  // useEffect(
+  //   () => () => void ephemeralData.broadcast(channelId, userId), // UserID as a string = offline signal
+  //   []
+  // );
 
   return [localState, setState];
 };
