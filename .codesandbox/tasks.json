@@ -1,0 +1,22 @@
+{
+  "setupTasks": [
+    {
+      "name": "yarn install",
+      "command": "yarn install"
+    },
+    {
+      "name": "yarn build",
+      "command": "yarn build"
+    }
+  ],
+  "tasks": {
+    "start-app": {
+      "name": "Run Dev Server",
+      "command": "yarn start:syncserver",
+      "runAtStart": true,
+      "preview": {
+        "port": 3030
+      }
+    }
+  }
+}
